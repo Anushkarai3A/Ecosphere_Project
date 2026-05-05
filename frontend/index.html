@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Ecosphere — Gamified Environmental Education</title>
+  <meta name="description" content="Ecosphere is a gamified EdTech platform where you learn about the environment through quizzes, challenges, and epic adventures. Start your eco journey today!"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    /* ─── HERO ─────────────────────────────────────────── */
+    .hero{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      text-align:center;padding:2rem;position:relative;
+      background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,200,151,0.18) 0%,transparent 70%);
+    }
+    .hero-content{max-width:780px;animation:fadeUp 0.8s ease}
+    .hero-tagline{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(0,200,151,0.12);border:1px solid rgba(0,200,151,0.35);
+      border-radius:50px;padding:8px 20px;font-size:0.88rem;font-weight:700;
+      color:var(--green);margin-bottom:2rem;animation:fadeUp 0.6s ease;
+    }
+    .hero-title{
+      font-family:'Orbitron',monospace;
+      font-size:clamp(2.8rem,8vw,5.5rem);font-weight:900;line-height:1.05;
+      background:linear-gradient(135deg,#ffffff 0%,var(--green) 50%,var(--blue) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-bottom:1.25rem;
+    }
+    .hero-sub{
+      font-size:1.2rem;color:var(--text-muted);max-width:560px;margin:0 auto 2.5rem;
+      line-height:1.7;font-weight:600;
+    }
+    .hero-cta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+    .mascot{
+      font-size:clamp(5rem,15vw,9rem);
+      animation:bounce 3s ease-in-out infinite;
+      display:block;margin-bottom:1.5rem;
+      filter:drop-shadow(0 0 30px rgba(0,200,151,0.5));
+    }
+    /* ─── FLOATING STATS ───────────────────────────────── */
+    .float-stat{
+      position:absolute;background:var(--bg-card);
+      border:1px solid var(--border);border-radius:var(--radius-lg);
+      padding:12px 18px;backdrop-filter:blur(12px);
+      animation:float 4s ease-in-out infinite;
+      font-weight:700;font-size:0.9rem;white-space:nowrap;
+    }
+    .float-stat:nth-child(1){top:20%;left:5%;animation-delay:0s}
+    .float-stat:nth-child(2){top:35%;right:4%;animation-delay:1.5s}
+    .float-stat:nth-child(3){bottom:25%;left:3%;animation-delay:0.8s}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+    /* ─── FEATURES ─────────────────────────────────────── */
+    .features{padding:5rem 0;background:linear-gradient(to bottom,transparent,rgba(0,200,151,0.04))}
+    .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem}
+    .feat-card{
+      padding:2rem 1.5rem;text-align:center;
+      background:var(--bg-card);backdrop-filter:blur(16px);
+      border:1px solid var(--border);border-radius:var(--radius-xl);
+      box-shadow:var(--shadow);transition:var(--ease);
+    }
+    .feat-card:hover{transform:translateY(-8px);border-color:rgba(0,200,151,0.5);box-shadow:var(--glow)}
+    .feat-icon{font-size:3rem;display:block;margin-bottom:1rem;animation:bounce 2.5s ease-in-out infinite}
+    .feat-card:nth-child(2) .feat-icon{animation-delay:0.3s}
+    .feat-card:nth-child(3) .feat-icon{animation-delay:0.6s}
+    .feat-card:nth-child(4) .feat-icon{animation-delay:0.9s}
+    .feat-title{font-weight:900;font-size:1.1rem;margin-bottom:0.5rem;color:var(--green)}
+    .feat-desc{font-size:0.9rem;color:var(--text-muted);line-height:1.6}
+    /* ─── HOW IT WORKS ─────────────────────────────────── */
+    .steps{padding:4rem 0}
+    .step-row{display:flex;align-items:center;gap:2rem;margin-bottom:3rem;animation:slideIn 0.6s ease}
+    .step-row:nth-child(even){flex-direction:row-reverse}
+    .step-num{
+      min-width:80px;height:80px;border-radius:50%;
+      background:linear-gradient(135deg,var(--green),var(--blue));
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#000;
+      box-shadow:var(--glow);flex-shrink:0;
+    }
+    .step-text h3{font-size:1.25rem;font-weight:900;margin-bottom:0.4rem;color:var(--green)}
+    .step-text p{color:var(--text-muted);font-size:0.95rem;line-height:1.6}
+    @media(max-width:600px){.step-row,.step-row:nth-child(even){flex-direction:column;text-align:center}.float-stat{display:none}}
+    /* ─── CTA BANNER ───────────────────────────────────── */
+    .cta-banner{
+      margin:4rem auto;max-width:800px;
+      background:linear-gradient(135deg,rgba(0,200,151,0.15),rgba(0,168,255,0.1));
+      border:1px solid var(--border);border-radius:var(--radius-xl);
+      padding:3rem 2rem;text-align:center;box-shadow:var(--glow);
+    }
+    .cta-banner h2{font-family:'Orbitron',monospace;font-size:2rem;margin-bottom:1rem;color:var(--text)}
+    .cta-banner p{color:var(--text-muted);margin-bottom:2rem;font-size:1.05rem}
+  </style>
+</head>
+<body>
+  <!-- PARTICLES -->
+  <div class="particle-bg"></div>
+
+  <!-- NAVBAR (injected by JS) -->
+  <nav class="navbar"></nav>
+
+  <main class="page-wrap">
+    <!-- HERO -->
+    <section class="hero">
+      <span class="float-stat">🏆 2,840 XP · Top Player</span>
+      <span class="float-stat">🔥 3-Day Streak</span>
+      <span class="float-stat">🌍 1,200+ Eco Warriors</span>
+      <div class="hero-content">
+        <span class="hero-tagline">🌿 The Planet Needs Heroes. Be One.</span>
+        <span class="mascot">🌍</span>
+        <h1 class="hero-title">ECOSPHERE</h1>
+        <p class="hero-sub">A gamified learning adventure where environmental education meets epic gameplay. Earn XP, unlock badges, and become an Eco Hero!</p>
+        <div class="hero-cta">
+          <a href="login.html" class="btn btn-primary btn-lg">🚀 Start Your Journey</a>
+          <a href="quiz.html" class="btn btn-secondary btn-lg">⚡ Try a Quick Quiz</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+      <div class="container">
+        <h2 class="section-title" style="text-align:center;margin-bottom:3rem">Why Ecosphere? 🌿</h2>
+        <div class="feat-grid">
+          <div class="feat-card">
+            <span class="feat-icon">🎮</span>
+            <div class="feat-title">Gamified Learning</div>
+            <p class="feat-desc">Earn XP, level up from Eco Seedling to Eco Hero, and compete with friends on the leaderboard.</p>
+          </div>
+          <div class="feat-card">
+            <span class="feat-icon">🤖</span>
+            <div class="feat-title">AI Personalization</div>
+            <p class="feat-desc">Our ML model tracks your performance and recommends quizzes at the perfect difficulty for you.</p>
+          </div>
+          <div class="feat-card">
+            <span class="feat-icon">🌱</span>
+            <div class="feat-title">Real Eco Challenges</div>
+            <p class="feat-desc">Complete real-world environmental tasks and earn special badges for making a difference.</p>
+          </div>
+          <div class="feat-card">
+            <span class="feat-icon">🏅</span>
+            <div class="feat-title">Badges & Rewards</div>
+            <p class="feat-desc">Unlock 12 unique badges from Recycle Master to Earth Hero. Collect them all!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="steps">
+      <div class="container">
+        <h2 class="section-title" style="text-align:center;margin-bottom:3rem">How It Works 🗺️</h2>
+        <div style="max-width:650px;margin:0 auto">
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div class="step-text"><h3>Create Your Eco Profile</h3><p>Sign up, pick your avatar, and set your eco name. Your adventure begins here.</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div class="step-text"><h3>Learn Through Quizzes</h3><p>Take interactive MCQ quizzes on climate, biodiversity, energy, and more. Get instant feedback!</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div class="step-text"><h3>Complete Eco Challenges</h3><p>Real-world tasks like planting trees or reducing plastic earn bonus XP and rare badges.</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div class="step-text"><h3>Rise the Leaderboard</h3><p>Compete globally, earn your rank, and become the ultimate Eco Hero!</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <div class="container">
+      <div class="cta-banner animate-glow">
+        <h2>Ready to Save the Planet? 🌏</h2>
+        <p>Join 1,200+ eco warriors already earning XP and making a difference.</p>
+        <a href="login.html" class="btn btn-primary btn-lg">🌱 Join Ecosphere Free</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      injectNavbar('index.html');
+      // Animate sections on scroll
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if(e.isIntersecting) e.target.style.opacity = 1; });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.feat-card,.step-row').forEach(el => {
+        el.style.opacity = 0;
+        el.style.transition = 'opacity 0.6s ease';
+        observer.observe(el);
+      });
+    });
+  </script>
+</body>
+</html>

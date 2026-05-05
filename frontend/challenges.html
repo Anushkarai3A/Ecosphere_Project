@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Eco Challenges — Ecosphere</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .cat-tabs{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:2rem}
+    .cat-tab{padding:8px 20px;border-radius:50px;border:1.5px solid rgba(0,200,151,0.2);background:rgba(17,28,50,0.6);color:var(--text-muted);font-weight:700;font-size:0.88rem;cursor:pointer;transition:var(--ease)}
+    .cat-tab:hover,.cat-tab.active{background:rgba(0,200,151,0.15);border-color:var(--green);color:var(--green)}
+    .chal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.25rem}
+    .chal-card{padding:1.5rem;position:relative;overflow:hidden;transition:var(--ease)}
+    .chal-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px;background:linear-gradient(to bottom,var(--green),var(--blue))}
+    .chal-card.done{opacity:0.72}
+    .chal-card.done::before{background:linear-gradient(to bottom,var(--gold),var(--gold-dark))}
+    .chal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:0.75rem}
+    .chal-icon{font-size:2.2rem}
+    .chal-xp{font-family:'Orbitron',monospace;font-size:0.85rem;color:var(--gold);font-weight:700;white-space:nowrap}
+    .chal-title{font-weight:800;font-size:1rem;margin-bottom:0.35rem}
+    .chal-desc{font-size:0.85rem;color:var(--text-muted);line-height:1.5;margin-bottom:1rem}
+    .chal-meta{display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
+    .chal-tag{padding:3px 10px;border-radius:50px;font-size:0.75rem;font-weight:700}
+    .tag-daily{background:rgba(0,200,151,0.12);color:var(--green);border:1px solid rgba(0,200,151,0.25)}
+    .tag-weekly{background:rgba(0,168,255,0.12);color:var(--blue);border:1px solid rgba(0,168,255,0.25)}
+    .tag-special{background:rgba(255,215,0,0.12);color:var(--gold);border:1px solid rgba(255,215,0,0.3)}
+    .tag-easy{background:rgba(0,200,151,0.1);color:var(--green)}
+    .tag-medium{background:rgba(255,165,0,0.1);color:var(--gold-dark)}
+    .tag-hard{background:rgba(255,77,109,0.1);color:var(--red)}
+    .chal-btn{width:100%;padding:10px;border-radius:var(--radius-md);border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;transition:var(--ease)}
+    .chal-btn.todo{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff}
+    .chal-btn.todo:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,200,151,0.4)}
+    .chal-btn.done-btn{background:rgba(255,215,0,0.1);color:var(--gold);border:1px solid rgba(255,215,0,0.3);cursor:default}
+    .progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+    .progress-ring-mini{position:relative;display:inline-flex;align-items:center;justify-content:center}
+    .progress-ring-mini svg{transform:rotate(-90deg)}
+    .prog-inner{position:absolute;text-align:center;font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--green)}
+  </style>
+</head>
+<body>
+  <div class="particle-bg"></div>
+  <nav class="navbar"></nav>
+  <main class="page-wrap">
+    <div class="container section">
+      <!-- Header -->
+      <div class="progress-header">
+        <div>
+          <h1 class="section-title" style="margin-bottom:0.25rem">Eco Challenges 🌿</h1>
+          <p style="color:var(--text-muted)">Complete real-world tasks, earn XP and rare badges!</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:1.5rem">
+          <div class="progress-ring-mini">
+            <svg width="80" height="80" viewBox="0 0 70 70">
+              <defs><linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00C897"/><stop offset="100%" stop-color="#FFD700"/></linearGradient></defs>
+              <circle cx="35" cy="35" r="30" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+              <circle cx="35" cy="35" r="30" fill="none" stroke="url(#cg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="188" id="chal-prog-ring" style="stroke-dashoffset:188;transition:stroke-dashoffset 1.2s ease"/>
+            </svg>
+            <div class="prog-inner" id="chal-pct">0%</div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-size:1.1rem" id="chal-done-count">0 / 0</div>
+            <div style="font-size:0.82rem;color:var(--text-muted)">Challenges Done</div>
+            <div style="font-family:'Orbitron',monospace;color:var(--gold);font-size:0.9rem;margin-top:4px" id="chal-xp-total">0 XP earned</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterChal('all',this)">🌍 All</button>
+        <button class="cat-tab" onclick="filterChal('daily',this)">📅 Daily</button>
+        <button class="cat-tab" onclick="filterChal('weekly',this)">🗓️ Weekly</button>
+        <button class="cat-tab" onclick="filterChal('special',this)">⭐ Special</button>
+      </div>
+
+      <!-- Cards -->
+      <div class="chal-grid" id="chal-grid"></div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    const CHALLENGES = [
+      { id:'c1', icon:'🌳', title:'Plant a Sapling', desc:'Plant at least one tree or seedling in your yard, school, or community.', xp:75, tag:'daily',   diff:'easy',   badge:'tree_saver' },
+      { id:'c2', icon:'♻️', title:'Recycle 10 Items', desc:'Sort and recycle 10 household items into the correct recycling bins today.', xp:60, tag:'daily',   diff:'easy',   badge:'recycle_master' },
+      { id:'c3', icon:'🚶', title:'Walk Instead of Drive', desc:'Choose to walk or cycle for a journey you would normally drive.', xp:50, tag:'daily',   diff:'easy',   badge:null },
+      { id:'c4', icon:'💧', title:'Save 10L of Water', desc:'Take a 3-minute shower and turn off taps while brushing teeth. Save 10 litres!', xp:65, tag:'daily',   diff:'medium', badge:null },
+      { id:'c5', icon:'🛍️', title:'Go Plastic-Free for a Day', desc:'Complete a full day without buying or using single-use plastic products.', xp:80, tag:'weekly',  diff:'medium', badge:'ocean_guardian' },
+      { id:'c6', icon:'🌊', title:'Beach/Park Cleanup', desc:'Join or organise a local cleanup event, collect at least 1kg of litter.', xp:100, tag:'weekly',  diff:'hard',   badge:'ocean_guardian' },
+      { id:'c7', icon:'🥦', title:'Eat Plant-Based Today', desc:'Eat a fully plant-based diet for a whole day to reduce your carbon footprint.', xp:60, tag:'daily',   diff:'medium', badge:null },
+      { id:'c8', icon:'💡', title:'Energy Audit', desc:'Identify and fix 3 energy-wasting habits in your home (lights, standby, etc.).', xp:70, tag:'weekly',  diff:'medium', badge:null },
+      { id:'c9', icon:'📚', title:'Educate a Friend', desc:'Share an eco fact with a friend or family member and start a conversation about climate.', xp:45, tag:'daily',   diff:'easy',   badge:null },
+      { id:'c10',icon:'🌞', title:'Solar Power Research', desc:'Research one solar energy solution and calculate how it could help your household.', xp:90, tag:'special', diff:'hard',   badge:'sun_chaser' },
+      { id:'c11',icon:'🐝', title:'Support Pollinators', desc:'Plant flowers or set up a bee-friendly garden to support pollinator species.', xp:85, tag:'weekly',  diff:'medium', badge:'tree_saver' },
+      { id:'c12',icon:'🌬️', title:'Carbon Footprint Calculator', desc:'Use an online calculator to estimate your monthly carbon footprint and make a plan.', xp:70, tag:'special', diff:'medium', badge:'wind_rider' },
+    ];
+
+    let currentFilter = 'all', state;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireLogin()) return;
+      injectNavbar('challenges.html');
+      state = getState();
+      state.completedChallenges = state.completedChallenges || [];
+      renderCards('all');
+      updateProgress();
+    });
+
+    function filterChal(cat, el) {
+      currentFilter = cat;
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderCards(cat);
+    }
+
+    function renderCards(cat) {
+      const grid = document.getElementById('chal-grid');
+      grid.innerHTML = '';
+      const filtered = cat === 'all' ? CHALLENGES : CHALLENGES.filter(c => c.tag === cat);
+      filtered.forEach(c => {
+        const done = state.completedChallenges.includes(c.id);
+        const card = document.createElement('div');
+        card.className = `glass-card chal-card ${done ? 'done' : ''}`;
+        card.id = 'card-' + c.id;
+        card.innerHTML = `
+          <div class="chal-top">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                <span class="chal-icon">${c.icon}</span>
+                <span class="chal-title">${c.title}</span>
+              </div>
+              <p class="chal-desc">${c.desc}</p>
+            </div>
+            <div class="chal-xp">+${c.xp} XP</div>
+          </div>
+          <div class="chal-meta">
+            <span class="chal-tag tag-${c.tag}">${c.tag.charAt(0).toUpperCase()+c.tag.slice(1)}</span>
+            <span class="chal-tag tag-${c.diff}">${c.diff.charAt(0).toUpperCase()+c.diff.slice(1)}</span>
+            ${c.badge ? `<span class="chal-tag tag-special">🏅 Badge Available</span>` : ''}
+          </div>
+          <button class="chal-btn ${done?'done-btn':'todo'}" id="btn-${c.id}" onclick="completeChallenge('${c.id}')">
+            ${done ? '✅ Completed!' : '🎯 Mark Complete'}
+          </button>`;
+        grid.appendChild(card);
+      });
+    }
+
+    function completeChallenge(id) {
+      if (state.completedChallenges.includes(id)) return;
+      const c = CHALLENGES.find(x => x.id === id);
+      if (!c) return;
+      state.completedChallenges.push(id);
+      state.xp += c.xp;
+      state.challengesDone = (state.challengesDone||0) + 1;
+      state.history = state.history || [];
+      state.history.push({ date: new Date().toLocaleDateString('en',{month:'short',day:'numeric'}), xp: c.xp, quizScore: 0 });
+      saveState(state);
+      checkBadges(state);
+      if (c.badge) checkBadges(state);
+      refreshNavXP();
+      showToast(`+${c.xp} XP — ${c.title} done!`, 'success', '🌿');
+      fireConfetti();
+      // Update card UI
+      const card = document.getElementById('card-'+id);
+      if (card) card.classList.add('done');
+      const btn = document.getElementById('btn-'+id);
+      if (btn) { btn.className = 'chal-btn done-btn'; btn.textContent = '✅ Completed!'; }
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = CHALLENGES.length;
+      const done  = state.completedChallenges.length;
+      const pct   = Math.round((done / total) * 100);
+      const xpTotal = state.completedChallenges.reduce((sum, id) => {
+        const c = CHALLENGES.find(x=>x.id===id); return sum + (c?c.xp:0);
+      }, 0);
+      document.getElementById('chal-done-count').textContent = `${done} / ${total}`;
+      document.getElementById('chal-pct').textContent = pct + '%';
+      document.getElementById('chal-xp-total').textContent = `${xpTotal} XP earned`;
+      const circ = 2 * Math.PI * 30;
+      document.getElementById('chal-prog-ring').style.strokeDashoffset = circ * (1 - pct/100);
+    }
+  </script>
+</body>
+</html>

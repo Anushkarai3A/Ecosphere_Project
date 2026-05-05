@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Quiz Arena — Ecosphere</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .arena-wrap{max-width:780px;margin:0 auto;padding:2rem 1.5rem}
+    /* ── Lobby ── */
+    .lobby{text-align:center;padding:3rem 2rem}
+    .lobby-mascot{font-size:6rem;animation:bounce 2.5s ease-in-out infinite;filter:drop-shadow(0 0 24px rgba(0,200,151,0.5));display:block;margin-bottom:1.5rem}
+    .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}
+    .diff-card{padding:1.5rem 1rem;text-align:center;border-radius:var(--radius-lg);cursor:pointer;transition:var(--ease);border:2px solid rgba(0,200,151,0.15);background:rgba(17,28,50,0.6)}
+    .diff-card:hover,.diff-card.active{border-color:var(--green);background:rgba(0,200,151,0.12);transform:translateY(-4px)}
+    .diff-icon{font-size:2.5rem;display:block;margin-bottom:0.5rem}
+    .diff-name{font-weight:800;font-size:1rem}
+    .diff-xp{font-size:0.8rem;color:var(--text-muted);margin-top:3px}
+    @media(max-width:500px){.diff-grid{grid-template-columns:1fr}}
+    /* ── Quiz Screen ── */
+    .quiz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;gap:1rem;flex-wrap:wrap}
+    .q-counter{font-family:'Orbitron',monospace;font-size:0.9rem;color:var(--text-muted)}
+    .q-score-live{font-family:'Orbitron',monospace;font-size:0.9rem;color:var(--gold);font-weight:700}
+    /* Timer */
+    .timer-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
+    .timer-wrap svg{transform:rotate(-90deg)}
+    .ring-timer{fill:none;stroke-width:6;stroke-linecap:round;stroke-dasharray:188;transition:stroke-dashoffset 1s linear;stroke:var(--green)}
+    .timer-inner{position:absolute;font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--green)}
+    .timer-danger .ring-timer{stroke:var(--red)}
+    .timer-danger .timer-inner{color:var(--red)}
+    /* Q card */
+    .q-card{padding:2rem;animation:fadeSlide 0.4s ease}
+    @keyframes fadeSlide{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+    .q-text{font-size:1.2rem;font-weight:700;line-height:1.5;margin-bottom:1.75rem}
+    .opts-grid{display:flex;flex-direction:column;gap:0.8rem}
+    .q-progress{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;margin-bottom:2rem;overflow:hidden}
+    .q-progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:3px;transition:width 0.5s ease}
+    /* ── End Screen ── */
+    .end-screen{text-align:center;padding:2.5rem 1.5rem;animation:fadeUp 0.6s ease}
+    .end-score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;margin:1.5rem 0}
+    .score-text{position:absolute;text-align:center}
+    .score-big{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900}
+    .xp-gain-pop{animation:anim-pop 0.5s cubic-bezier(0.34,1.56,0.64,1);font-family:'Orbitron',monospace;font-size:2rem;color:var(--gold)}
+    .badge-unlocks{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
+    .new-badge-pop{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);border-radius:var(--radius-md);padding:10px 16px;text-align:center;animation:anim-pop 0.4s ease}
+  </style>
+</head>
+<body>
+  <div class="particle-bg"></div>
+  <nav class="navbar"></nav>
+  <main class="page-wrap">
+    <div class="arena-wrap">
+      <!-- LOBBY -->
+      <div class="glass-card" id="screen-lobby" style="padding:2rem">
+        <div class="lobby">
+          <span class="lobby-mascot">⚡</span>
+          <h1 style="font-family:'Orbitron',monospace;font-size:2rem;color:var(--text)">Quiz Arena</h1>
+          <p style="color:var(--text-muted);margin:0.75rem 0 2rem;font-size:1.05rem">Test your eco knowledge and earn XP!</p>
+          <h3 style="margin-bottom:0.75rem;font-size:1rem;color:var(--text-muted)">Select Difficulty</h3>
+          <div class="diff-grid">
+            <div class="diff-card active" id="d-easy" onclick="setDiff('easy')"><span class="diff-icon">🌱</span><div class="diff-name">Easy</div><div class="diff-xp">+10 XP each</div></div>
+            <div class="diff-card" id="d-medium" onclick="setDiff('medium')"><span class="diff-icon">🌿</span><div class="diff-name">Medium</div><div class="diff-xp">+15 XP each</div></div>
+            <div class="diff-card" id="d-hard" onclick="setDiff('hard')"><span class="diff-icon">🔥</span><div class="diff-name">Hard</div><div class="diff-xp">+20 XP each</div></div>
+          </div>
+          <p id="ai-diff-hint" style="color:var(--purple);font-size:0.85rem;margin-bottom:1.5rem">🤖 AI recommends: Easy</p>
+          <button class="btn btn-primary btn-lg" onclick="startQuiz()">⚡ Start Quiz!</button>
+        </div>
+      </div>
+
+      <!-- QUIZ SCREEN -->
+      <div id="screen-quiz" style="display:none">
+        <div class="glass-card" style="padding:1.5rem;margin-bottom:1rem">
+          <div class="quiz-header">
+            <span class="q-counter" id="q-counter">Q 1 / 5</span>
+            <div class="timer-wrap" id="timer-wrap">
+              <svg width="70" height="70" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="30" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
+                <circle class="ring-timer" id="timer-ring" cx="30" cy="30" r="30"/>
+              </svg>
+              <div class="timer-inner" id="timer-text">30</div>
+            </div>
+            <span class="q-score-live" id="live-score">⚡ 0 XP</span>
+          </div>
+          <div class="q-progress"><div class="q-progress-fill" id="q-prog" style="width:0%"></div></div>
+        </div>
+        <div class="glass-card q-card" id="q-card">
+          <div class="q-text" id="q-text">Question text</div>
+          <div class="opts-grid" id="opts-grid"></div>
+        </div>
+        <div class="flex-center mt-3">
+          <button class="btn btn-secondary btn-sm" onclick="skipQuestion()">Skip →</button>
+        </div>
+      </div>
+
+      <!-- END SCREEN -->
+      <div class="glass-card" id="screen-end" style="display:none;padding:2rem">
+        <div class="end-screen">
+          <h2 style="font-family:'Orbitron',monospace;font-size:1.8rem" id="end-title">Quiz Complete!</h2>
+          <div class="end-score-ring">
+            <svg width="160" height="160" viewBox="0 0 100 100">
+              <defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00C897"/>
+                <stop offset="100%" stop-color="#FFD700"/>
+              </linearGradient></defs>
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+              <circle cx="50" cy="50" r="45" fill="none" stroke="url(#sg)" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="283" id="score-ring"
+                style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1);stroke-dashoffset:283"/>
+            </svg>
+            <div class="score-text">
+              <div class="score-big text-green" id="end-score">0%</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Score</div>
+            </div>
+          </div>
+          <div class="xp-gain-pop" id="end-xp-gain">+0 XP</div>
+          <p style="color:var(--text-muted);margin:0.75rem 0 1.5rem" id="end-msg">Great effort!</p>
+          <div class="badge-unlocks" id="end-badges"></div>
+          <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem">
+            <button class="btn btn-primary" onclick="startQuiz()">🔄 Play Again</button>
+            <a href="dashboard.html" class="btn btn-secondary">📊 Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    let chosenDiff = 'easy', questions = [], current = 0, score = 0, xpEarned = 0;
+    let timerInterval, timeLeft = 30, newBadges = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireLogin()) return;
+      injectNavbar('quiz.html');
+      const s = getState();
+      const aiRes = await fetchMLPrediction(0, s.quizzesCompleted * 12, s.challengesDone);
+      chosenDiff = aiRes.difficulty || 'easy';
+      setDiff(chosenDiff);
+      document.getElementById('ai-diff-hint').textContent = `🤖 AI recommends: ${chosenDiff.charAt(0).toUpperCase()+chosenDiff.slice(1)}`;
+    });
+
+    function setDiff(d) {
+      chosenDiff = d;
+      ['easy','medium','hard'].forEach(x => document.getElementById('d-'+x).classList.toggle('active', x===d));
+    }
+
+    function startQuiz() {
+      const pool = QUIZ_QUESTIONS.filter(q => q.diff === chosenDiff);
+      questions = shuffle(pool).slice(0, 5);
+      current = 0; score = 0; xpEarned = 0; newBadges = [];
+      showScreen('quiz');
+      showQuestion();
+    }
+
+    function showQuestion() {
+      if (current >= questions.length) { endQuiz(); return; }
+      const q = questions[current];
+      document.getElementById('q-counter').textContent = `Q ${current+1} / ${questions.length}`;
+      document.getElementById('q-prog').style.width = (current / questions.length * 100) + '%';
+      document.getElementById('q-text').textContent = q.q;
+      const grid = document.getElementById('opts-grid');
+      grid.innerHTML = '';
+      const letters = ['A','B','C','D'];
+      q.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt';
+        btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}`;
+        btn.onclick = () => handleAnswer(i, q.ans, q.xp);
+        grid.appendChild(btn);
+      });
+      startTimer();
+    }
+
+    function handleAnswer(selected, correct, xp) {
+      clearInterval(timerInterval);
+      const btns = document.querySelectorAll('.quiz-opt');
+      btns.forEach(b => b.classList.add('disabled'));
+      if (selected === correct) {
+        btns[selected].classList.add('correct');
+        score++; xpEarned += xp;
+        document.getElementById('live-score').textContent = `⚡ ${xpEarned} XP`;
+        showToast(`Correct! +${xp} XP`, 'success', '✅');
+        // Perfect score check
+        if (score === questions.length) {
+          const s = getState(); if (!s.badges.includes('perfect_score')) newBadges.push('perfect_score');
+        }
+      } else {
+        btns[selected].classList.add('wrong');
+        btns[correct].classList.add('correct');
+        showToast('Not quite! Keep going 💪', 'error', '❌');
+      }
+      setTimeout(() => { current++; showQuestion(); }, 1100);
+    }
+
+    function skipQuestion() { clearInterval(timerInterval); current++; showQuestion(); }
+
+    function startTimer() {
+      timeLeft = 30;
+      const circ = 2 * Math.PI * 30;
+      const ring = document.getElementById('timer-ring');
+      const txt  = document.getElementById('timer-text');
+      const wrap = document.getElementById('timer-wrap');
+      ring.style.strokeDasharray = circ;
+      ring.style.strokeDashoffset = 0;
+      wrap.classList.remove('timer-danger');
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        txt.textContent = timeLeft;
+        ring.style.strokeDashoffset = circ * (1 - timeLeft / 30);
+        if (timeLeft <= 10) wrap.classList.add('timer-danger');
+        if (timeLeft <= 0) { clearInterval(timerInterval); handleAnswer(-1, questions[current].ans, 0); }
+      }, 1000);
+    }
+
+    function endQuiz() {
+      clearInterval(timerInterval);
+      const pct = Math.round((score / questions.length) * 100);
+      // Save state
+      const s = getState();
+      s.xp += xpEarned + XP_ACTIONS.quizComplete;
+      s.quizzesCompleted = (s.quizzesCompleted||0) + 1;
+      s.history = s.history||[];
+      s.history.push({ date: new Date().toLocaleDateString('en',{month:'short',day:'numeric'}), xp: xpEarned + XP_ACTIONS.quizComplete, quizScore: pct });
+      saveState(s);
+      checkBadges(s);
+      refreshNavXP();
+
+      // Perfect badge
+      if (pct === 100 && !s.badges.includes('perfect_score')) unlockSpecialBadge('perfect_score');
+
+      showScreen('end');
+      const totalXp = xpEarned + XP_ACTIONS.quizComplete;
+      document.getElementById('end-xp-gain').textContent = `+${totalXp} XP`;
+      document.getElementById('end-score').textContent = pct + '%';
+      document.getElementById('score-ring').style.strokeDashoffset = 283 * (1 - pct / 100);
+      const msgs = ['Amazing eco knowledge! 🌟','Great effort, keep going! 💪','You\'re learning fast! 🌱','Eco hero in the making! 🦅'];
+      document.getElementById('end-msg').textContent = msgs[Math.min(Math.floor(pct/26), 3)];
+      document.getElementById('end-title').textContent = pct === 100 ? '🎉 PERFECT SCORE!' : 'Quiz Complete!';
+      if (pct >= 80) { fireConfetti(); fireSideConfetti(); }
+    }
+
+    function showScreen(id) {
+      ['lobby','quiz','end'].forEach(s => document.getElementById('screen-'+s).style.display = s===id ? 'block' : 'none');
+    }
+    function shuffle(a) { return [...a].sort(()=>Math.random()-0.5); }
+  </script>
+</body>
+</html>

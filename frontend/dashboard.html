@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Ecosphere — Dashboard</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    .dash-grid{display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start}
+    @media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+    /* Player Card */
+    .player-card{padding:2rem;text-align:center;position:relative;overflow:hidden}
+    .player-card::before{content:'';position:absolute;top:-40px;left:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,200,151,0.2),transparent 70%);border-radius:50%}
+    .player-avatar{font-size:5rem;display:block;margin:0 auto 1rem;animation:bounce 3s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(0,200,151,0.4))}
+    .player-name{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--text);margin-bottom:0.4rem}
+    .player-sub{color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem}
+    /* Ring */
+    .ring-section{margin:1.5rem 0;display:flex;justify-content:center}
+    /* AI Card */
+    .ai-card{padding:1.25rem;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(0,168,255,0.1));border:1px solid rgba(124,58,237,0.3);border-radius:var(--radius-lg)}
+    .ai-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.2);color:#a78bfa;padding:4px 12px;border-radius:50px;font-size:0.78rem;font-weight:700;margin-bottom:0.75rem}
+    /* Streak */
+    .streak-dots{display:flex;gap:8px;justify-content:center;margin-top:0.75rem}
+    .streak-dot{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:var(--ease)}
+    .streak-dot.active{background:rgba(255,165,0,0.2);border-color:var(--gold-dark)}
+    /* Quick Actions */
+    .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+    .quick-btn{padding:1.25rem;text-align:center;border-radius:var(--radius-lg);cursor:pointer;transition:var(--ease);border:1px solid var(--border);background:var(--bg-card);backdrop-filter:blur(12px);text-decoration:none;display:block;color:var(--text)}
+    .quick-btn:hover{transform:translateY(-6px);border-color:rgba(0,200,151,0.4);box-shadow:var(--glow)}
+    .quick-icon{font-size:2.2rem;display:block;margin-bottom:0.5rem;animation:bounce 2.5s ease-in-out infinite}
+    .quick-btn:nth-child(2) .quick-icon{animation-delay:0.2s}
+    .quick-btn:nth-child(3) .quick-icon{animation-delay:0.4s}
+    .quick-btn:nth-child(4) .quick-icon{animation-delay:0.6s}
+    .quick-label{font-weight:800;font-size:0.92rem}
+    .quick-sub{font-size:0.78rem;color:var(--text-muted);margin-top:3px}
+    /* Recent Badges */
+    .mini-badge{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);background:rgba(255,255,255,0.04);margin-bottom:8px;transition:var(--ease)}
+    .mini-badge:hover{background:rgba(0,200,151,0.07)}
+    /* Chart */
+    .chart-card{padding:1.75rem}
+    .chart-wrap{position:relative;height:220px}
+  </style>
+</head>
+<body>
+  <div class="particle-bg"></div>
+  <nav class="navbar"></nav>
+  <main class="page-wrap">
+    <div class="container section">
+      <div class="flex-between mb-3" style="flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="section-title" style="margin-bottom:0.25rem">My Dashboard 🌍</h1>
+          <p style="color:var(--text-muted)" id="dash-greeting">Loading...</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span id="dash-streak" class="lvl-badge lvl-seedling">🔥 Streak: 1</span>
+          <span id="dash-level-badge" class="lvl-badge lvl-seedling">🌱 Eco Seedling</span>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- LEFT: Player Card -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <!-- Player -->
+          <div class="glass-card player-card">
+            <span class="player-avatar" id="p-avatar">🌱</span>
+            <div class="player-name" id="p-name">—</div>
+            <div class="player-sub" id="p-level-text">Eco Seedling</div>
+            <!-- XP Ring -->
+            <div class="ring-section">
+              <div class="ring-wrap">
+                <svg width="140" height="140" viewBox="0 0 100 100">
+                  <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00C897"/>
+                    <stop offset="100%" stop-color="#00FFB3"/>
+                  </linearGradient></defs>
+                  <circle class="ring-bg" cx="50" cy="50" r="45"/>
+                  <circle class="ring-fill" id="xp-ring" cx="50" cy="50" r="45" stroke="url(#rg)"/>
+                </svg>
+                <div class="ring-inner">
+                  <div class="font-orb fw-900" style="font-size:1.4rem;color:var(--green)" id="ring-xp">0</div>
+                  <div style="font-size:0.7rem;color:var(--text-muted)">XP</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem" id="xp-progress-text"></div>
+            <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid-2">
+            <div class="glass-card stat-card"><span class="stat-icon">⚡</span><div class="stat-value" id="s-xp">0</div><div class="stat-label">Total XP</div></div>
+            <div class="glass-card stat-card"><span class="stat-icon">📝</span><div class="stat-value" id="s-quiz">0</div><div class="stat-label">Quizzes Done</div></div>
+            <div class="glass-card stat-card"><span class="stat-icon">🎯</span><div class="stat-value" id="s-chal">0</div><div class="stat-label">Challenges</div></div>
+            <div class="glass-card stat-card"><span class="stat-icon">🏅</span><div class="stat-value" id="s-badges">0</div><div class="stat-label">Badges</div></div>
+          </div>
+
+          <!-- AI Recommendation -->
+          <div class="glass-card p-3">
+            <div class="ai-tag">🤖 AI Recommendation</div>
+            <p id="ai-rec" style="font-size:0.9rem;color:var(--text-muted);line-height:1.6">Analyzing your performance...</p>
+            <div style="margin-top:0.75rem;display:flex;gap:8px;align-items:center">
+              <span style="font-size:0.82rem;color:var(--text-muted)">Your level:</span>
+              <span class="lvl-badge lvl-seedling" id="ai-level">Beginner</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Charts + Actions -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <!-- Quick Actions -->
+          <div class="quick-grid">
+            <a href="quiz.html" class="quick-btn"><span class="quick-icon">⚡</span><div class="quick-label">Quiz Arena</div><div class="quick-sub">+10 XP per answer</div></a>
+            <a href="challenges.html" class="quick-btn"><span class="quick-icon">🌿</span><div class="quick-label">Eco Challenges</div><div class="quick-sub">+75 XP per task</div></a>
+            <a href="leaderboard.html" class="quick-btn"><span class="quick-icon">🏆</span><div class="quick-label">Leaderboard</div><div class="quick-sub">See your rank</div></a>
+            <a href="rewards.html" class="quick-btn"><span class="quick-icon">🎖️</span><div class="quick-label">Badges</div><div class="quick-sub" id="badge-count-txt">0 unlocked</div></a>
+          </div>
+
+          <!-- Performance Chart -->
+          <div class="glass-card chart-card">
+            <h3 style="font-weight:800;margin-bottom:1rem;color:var(--text)">📈 XP Progress</h3>
+            <div class="chart-wrap"><canvas id="xpChart"></canvas></div>
+          </div>
+
+          <!-- Streak -->
+          <div class="glass-card p-3">
+            <div class="flex-between mb-2">
+              <span style="font-weight:800">🔥 Weekly Streak</span>
+              <span style="color:var(--gold);font-weight:700" id="streak-count">1 day</span>
+            </div>
+            <div class="streak-dots" id="streak-dots"></div>
+          </div>
+
+          <!-- Recent Badges -->
+          <div class="glass-card p-3">
+            <div class="flex-between mb-2">
+              <span style="font-weight:800">🏅 Recent Badges</span>
+              <a href="rewards.html" style="color:var(--green);font-size:0.85rem;font-weight:700">View All →</a>
+            </div>
+            <div id="badge-list"><p style="color:var(--text-muted);font-size:0.9rem">Complete quizzes to earn badges!</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireLogin()) return;
+      injectNavbar('dashboard.html');
+      const s = getState();
+      const lvl = getLevel(s.xp);
+      const prog = xpToNextLevel(s.xp);
+
+      // Greeting
+      const hr = new Date().getHours();
+      const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('dash-greeting').textContent = `${greet}, ${s.name}! Keep saving the planet 🌍`;
+
+      // Player card
+      document.getElementById('p-avatar').textContent = s.avatar;
+      document.getElementById('p-name').textContent = s.name;
+      document.getElementById('p-level-text').textContent = `${lvl.emoji} ${lvl.name}`;
+      document.getElementById('dash-level-badge').textContent = `${lvl.emoji} ${lvl.name}`;
+      document.getElementById('dash-level-badge').className = `lvl-badge ${lvl.cls}`;
+      document.getElementById('dash-streak').textContent = `🔥 Streak: ${s.streak||1}`;
+
+      // XP Ring animation
+      setTimeout(() => {
+        const circumference = 2 * Math.PI * 45;
+        const offset = circumference * (1 - prog.pct / 100);
+        document.getElementById('xp-ring').style.strokeDasharray = circumference;
+        document.getElementById('xp-ring').style.strokeDashoffset = offset;
+        document.getElementById('xp-bar').style.width = prog.pct + '%';
+        document.getElementById('xp-progress-text').textContent =
+          prog.needed ? `${prog.current} / ${prog.needed} XP to next level` : 'MAX LEVEL 🦅';
+      }, 300);
+
+      // Count-up stats
+      const ringEl = document.getElementById('ring-xp');
+      countUp(ringEl, s.xp);
+      countUp(document.getElementById('s-xp'), s.xp);
+      countUp(document.getElementById('s-quiz'), s.quizzesCompleted||0);
+      countUp(document.getElementById('s-chal'), s.challengesDone||0);
+      countUp(document.getElementById('s-badges'), s.badges.length);
+      document.getElementById('badge-count-txt').textContent = `${s.badges.length} unlocked`;
+
+      // AI Rec
+      const aiRes = await fetchMLPrediction(
+        s.history.length ? Math.round(s.history.slice(-3).reduce((a,h)=>a+(h.quizScore||0),0)/Math.max(s.history.slice(-3).length,1)) : 0,
+        s.quizzesCompleted * 12,
+        s.challengesDone
+      );
+      document.getElementById('ai-rec').textContent = aiRes.recommendation;
+      const aiLvlEl = document.getElementById('ai-level');
+      aiLvlEl.textContent = aiRes.level;
+      aiLvlEl.className = `lvl-badge ${aiRes.level==='Advanced'?'lvl-hero':aiRes.level==='Intermediate'?'lvl-keeper':'lvl-seedling'}`;
+
+      // Streak dots
+      const dotWrap = document.getElementById('streak-dots');
+      const days = ['M','T','W','T','F','S','S'];
+      days.forEach((d,i) => {
+        const dot = document.createElement('div');
+        dot.className = 'streak-dot' + (i < (s.streak||1) ? ' active' : '');
+        dot.innerHTML = i < (s.streak||1) ? '🔥' : `<span style="color:var(--text-muted);font-size:0.7rem">${d}</span>`;
+        dotWrap.appendChild(dot);
+      });
+      document.getElementById('streak-count').textContent = `${s.streak||1} day${(s.streak||1)!==1?'s':''}`;
+
+      // Recent badges
+      const bList = document.getElementById('badge-list');
+      if (s.badges.length) {
+        bList.innerHTML = '';
+        s.badges.slice(-4).reverse().forEach(bid => {
+          const b = BADGE_DEFS.find(x=>x.id===bid);
+          if (!b) return;
+          const row = document.createElement('div');
+          row.className = 'mini-badge';
+          row.innerHTML = `<span style="font-size:1.8rem">${b.emoji}</span><div><div style="font-weight:700;font-size:0.88rem">${b.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${b.desc}</div></div>`;
+          bList.appendChild(row);
+        });
+      }
+
+      // Chart.js XP history
+      const history = s.history && s.history.length
+        ? s.history.slice(-8)
+        : [{ date:'Day 1', xp:20 }];
+      const labels = history.map((h,i) => h.date || `Session ${i+1}`);
+      const xpData  = history.map(h => h.xp || 0);
+      const ctx = document.getElementById('xpChart').getContext('2d');
+      new Chart(ctx, {
+        type:'line',
+        data:{
+          labels,
+          datasets:[{
+            label:'XP Earned',
+            data: xpData,
+            borderColor:'#00C897',
+            backgroundColor:'rgba(0,200,151,0.1)',
+            pointBackgroundColor:'#00C897',
+            pointRadius:5,tension:0.4,fill:true
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,15,30,0.9)',titleColor:'#00C897',bodyColor:'#E2E8F0',borderColor:'rgba(0,200,151,0.3)',borderWidth:1}},
+          scales:{
+            x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94A3B8',font:{family:'Nunito',size:11}}},
+            y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94A3B8',font:{family:'Nunito',size:11}}}
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Rewards & Badges — Ecosphere</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .rewards-header{text-align:center;margin-bottom:3rem}
+    .xp-store{background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,165,0,0.06));border:1px solid rgba(255,215,0,0.3);border-radius:var(--radius-xl);padding:2rem;margin-bottom:2.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+    .xp-total-big{font-family:'Orbitron',monospace;font-size:3rem;font-weight:900;color:var(--gold)}
+    .xp-total-label{color:var(--text-muted);font-size:0.9rem;margin-top:4px}
+    .level-journey{display:flex;align-items:center;gap:0;margin-bottom:3rem;overflow-x:auto;padding-bottom:1rem}
+    .journey-step{display:flex;flex-direction:column;align-items:center;min-width:110px;position:relative}
+    .journey-step:not(:last-child)::after{content:'';position:absolute;top:28px;left:60%;width:100%;height:3px;background:rgba(255,255,255,0.1);z-index:0}
+    .journey-step.achieved:not(:last-child)::after{background:linear-gradient(to right,var(--green),rgba(0,200,151,0.3))}
+    .j-icon{width:56px;height:56px;border-radius:50%;border:3px solid rgba(255,255,255,0.1);background:rgba(17,28,50,0.8);display:flex;align-items:center;justify-content:center;font-size:1.8rem;position:relative;z-index:1;transition:var(--ease)}
+    .journey-step.achieved .j-icon{border-color:var(--green);box-shadow:0 0 16px rgba(0,200,151,0.4)}
+    .j-name{font-size:0.75rem;font-weight:700;margin-top:8px;text-align:center;color:var(--text-muted)}
+    .journey-step.achieved .j-name{color:var(--green)}
+    .j-xp{font-size:0.68rem;color:var(--text-muted);font-family:'Orbitron',monospace}
+    /* Badge grid */
+    .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1.25rem}
+    .badge-card{padding:1.5rem 1rem;text-align:center;cursor:default;position:relative;overflow:hidden;transition:var(--ease)}
+    .badge-card.unlocked:hover{transform:translateY(-6px);box-shadow:var(--glow)}
+    .badge-card.locked{opacity:0.32;filter:grayscale(1)}
+    .badge-card.unlocked{background:linear-gradient(135deg,rgba(17,28,50,0.9),rgba(0,200,151,0.07))}
+    .badge-card.unlocked::after{content:'✨';position:absolute;top:8px;right:10px;font-size:1rem;animation:pulse 1.5s ease-in-out infinite}
+    .b-icon{font-size:3rem;display:block;margin-bottom:0.6rem;transition:var(--ease)}
+    .badge-card.unlocked:hover .b-icon{transform:scale(1.3) rotate(10deg)}
+    .b-name{font-weight:800;font-size:0.88rem;margin-bottom:4px}
+    .b-desc{font-size:0.74rem;color:var(--text-muted);line-height:1.4}
+    .b-locked-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+    .filter-bar{display:flex;gap:0.75rem;margin-bottom:1.75rem;flex-wrap:wrap}
+    .filter-btn{padding:6px 16px;border-radius:50px;border:1.5px solid rgba(0,200,151,0.2);background:transparent;color:var(--text-muted);font-weight:700;font-size:0.82rem;cursor:pointer;transition:var(--ease);font-family:'Nunito',sans-serif}
+    .filter-btn.active,.filter-btn:hover{border-color:var(--green);color:var(--green);background:rgba(0,200,151,0.08)}
+    .badge-popup{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .popup-box{max-width:380px;width:100%;padding:2.5rem;text-align:center;animation:anim-pop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+    .popup-icon{font-size:5rem;display:block;margin-bottom:1rem;animation:bounce 2s ease-in-out infinite}
+    .progress-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+  </style>
+</head>
+<body>
+  <div class="particle-bg"></div>
+  <nav class="navbar"></nav>
+  <main class="page-wrap">
+    <div class="container section">
+      <div class="rewards-header">
+        <h1 class="section-title">Rewards & Badges 🏅</h1>
+        <p style="color:var(--text-muted)">Your collection of eco achievements. Keep playing to unlock them all!</p>
+      </div>
+
+      <!-- XP Store Card -->
+      <div class="xp-store">
+        <div>
+          <div class="xp-total-big" id="total-xp">0</div>
+          <div class="xp-total-label">Total XP Earned</div>
+        </div>
+        <div style="flex:1;max-width:320px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-weight:700;font-size:0.85rem" id="lvl-name-text">🌱 Eco Seedling</span>
+            <span style="font-size:0.82rem;color:var(--text-muted)" id="xp-prog-text">0 / 200 XP</span>
+          </div>
+          <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:6px" id="next-lvl-hint">Next: Green Explorer 🌿</p>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:2.5rem" id="reward-avatar">🌱</div>
+          <div style="font-weight:800;margin-top:4px" id="reward-name">Player</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)"><span id="badge-count">0</span> / 12 badges</div>
+        </div>
+      </div>
+
+      <!-- Progress Summary -->
+      <div class="progress-summary">
+        <div class="glass-card stat-card"><span class="stat-icon">📝</span><div class="stat-value" id="s-quiz">0</div><div class="stat-label">Quizzes Done</div></div>
+        <div class="glass-card stat-card"><span class="stat-icon">🎯</span><div class="stat-value" id="s-chal">0</div><div class="stat-label">Challenges Done</div></div>
+        <div class="glass-card stat-card"><span class="stat-icon">🔥</span><div class="stat-value" id="s-streak">1</div><div class="stat-label">Day Streak</div></div>
+      </div>
+
+      <!-- Level Journey -->
+      <h2 style="font-weight:800;margin-bottom:1.25rem">🗺️ Level Journey</h2>
+      <div class="level-journey" id="level-journey"></div>
+
+      <!-- Badge Section -->
+      <div class="flex-between mb-3" style="flex-wrap:wrap;gap:1rem">
+        <h2 style="font-weight:800">🏅 Badge Collection</h2>
+        <div class="filter-bar" style="margin-bottom:0">
+          <button class="filter-btn active" onclick="filterBadges('all',this)">All</button>
+          <button class="filter-btn" onclick="filterBadges('unlocked',this)">✅ Unlocked</button>
+          <button class="filter-btn" onclick="filterBadges('locked',this)">🔒 Locked</button>
+        </div>
+      </div>
+      <div class="badge-grid" id="badge-grid"></div>
+    </div>
+  </main>
+
+  <!-- Badge Detail Popup -->
+  <div class="badge-popup hidden" id="badge-popup" onclick="closePopup()">
+    <div class="glass-card popup-box" onclick="event.stopPropagation()">
+      <span class="popup-icon" id="pop-icon">🏅</span>
+      <h2 style="font-size:1.4rem;font-weight:900;margin-bottom:0.5rem" id="pop-name">Badge</h2>
+      <p style="color:var(--text-muted);margin-bottom:1.5rem" id="pop-desc">Description</p>
+      <div id="pop-status"></div>
+      <button class="btn btn-secondary mt-3" onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    const JOURNEY_LEVELS = [
+      { emoji:'🌱', name:'Eco Seedling',   xpReq:0,    cls:'lvl-seedling' },
+      { emoji:'🌿', name:'Green Explorer', xpReq:200,  cls:'lvl-explorer' },
+      { emoji:'🌳', name:'Nature Keeper',  xpReq:500,  cls:'lvl-keeper'   },
+      { emoji:'🦅', name:'Eco Hero',       xpReq:1000, cls:'lvl-hero'     }
+    ];
+
+    let state, filterMode = 'all';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireLogin()) return;
+      injectNavbar('rewards.html');
+      state = getState();
+      renderHeader();
+      renderJourney();
+      renderBadges('all');
+    });
+
+    function renderHeader() {
+      const s = state;
+      const lvl  = getLevel(s.xp);
+      const prog = xpToNextLevel(s.xp);
+      countUp(document.getElementById('total-xp'), s.xp);
+      document.getElementById('lvl-name-text').textContent = `${lvl.emoji} ${lvl.name}`;
+      document.getElementById('xp-prog-text').textContent  = prog.needed ? `${prog.current} / ${prog.needed} XP` : 'MAX LEVEL';
+      document.getElementById('xp-bar').style.width        = prog.pct + '%';
+      const nextIdx = JOURNEY_LEVELS.findIndex(l=>l.name===lvl.name)+1;
+      document.getElementById('next-lvl-hint').textContent  = nextIdx < JOURNEY_LEVELS.length ? `Next: ${JOURNEY_LEVELS[nextIdx].name} ${JOURNEY_LEVELS[nextIdx].emoji}` : '🦅 Max Level Reached!';
+      document.getElementById('reward-avatar').textContent  = s.avatar;
+      document.getElementById('reward-name').textContent    = s.name;
+      document.getElementById('badge-count').textContent    = s.badges.length;
+      countUp(document.getElementById('s-quiz'),   s.quizzesCompleted||0);
+      countUp(document.getElementById('s-chal'),   s.challengesDone||0);
+      document.getElementById('s-streak').textContent       = s.streak||1;
+    }
+
+    function renderJourney() {
+      const jWrap = document.getElementById('level-journey');
+      jWrap.innerHTML = '';
+      const xp = state.xp;
+      JOURNEY_LEVELS.forEach(lv => {
+        const achieved = xp >= lv.xpReq;
+        const div = document.createElement('div');
+        div.className = `journey-step ${achieved?'achieved':''}`;
+        div.innerHTML = `
+          <div class="j-icon">${lv.emoji}</div>
+          <div class="j-name">${lv.name}</div>
+          <div class="j-xp">${lv.xpReq>0?lv.xpReq+' XP':'Start'}</div>`;
+        jWrap.appendChild(div);
+      });
+    }
+
+    function filterBadges(mode, el) {
+      filterMode = mode;
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      el.classList.add('active');
+      renderBadges(mode);
+    }
+
+    function renderBadges(mode) {
+      const grid = document.getElementById('badge-grid');
+      grid.innerHTML = '';
+      const filtered = BADGE_DEFS.filter(b => {
+        if (mode==='unlocked') return state.badges.includes(b.id);
+        if (mode==='locked')   return !state.badges.includes(b.id);
+        return true;
+      });
+      filtered.forEach(b => {
+        const unlocked = state.badges.includes(b.id);
+        const card = document.createElement('div');
+        card.className = `glass-card badge-card ${unlocked?'unlocked':'locked'}`;
+        card.onclick = () => showPopup(b, unlocked);
+        card.innerHTML = `
+          <span class="b-icon">${b.emoji}</span>
+          <div class="b-name">${b.name}</div>
+          <div class="b-desc">${b.desc}</div>
+          ${!unlocked ? '<div class="b-locked-overlay">🔒</div>' : ''}`;
+        grid.appendChild(card);
+      });
+    }
+
+    function showPopup(b, unlocked) {
+      document.getElementById('pop-icon').textContent = b.emoji;
+      document.getElementById('pop-name').textContent = b.name;
+      document.getElementById('pop-desc').textContent = b.desc;
+      const status = document.getElementById('pop-status');
+      status.innerHTML = unlocked
+        ? `<div class="lvl-badge lvl-keeper" style="display:inline-flex">✅ Unlocked!</div>`
+        : `<div style="font-size:0.85rem;color:var(--text-muted)">🔒 Complete requirements to unlock:<br><strong style="color:var(--text)">${b.desc}</strong></div>`;
+      document.getElementById('badge-popup').classList.remove('hidden');
+      if (unlocked) { fireConfetti(); }
+    }
+    function closePopup() { document.getElementById('badge-popup').classList.add('hidden'); }
+  </script>
+</body>
+</html>

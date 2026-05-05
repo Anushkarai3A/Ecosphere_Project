@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Leaderboard — Ecosphere</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .lb-wrap{max-width:760px;margin:0 auto}
+    .podium{display:flex;align-items:flex-end;justify-content:center;gap:1rem;margin:2rem 0 3rem;padding:0 1rem}
+    .podium-spot{text-align:center;flex:1;max-width:180px}
+    .podium-avatar{font-size:2.5rem;display:block;margin-bottom:0.5rem}
+    .podium-name{font-weight:800;font-size:0.9rem;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .podium-xp{font-family:'Orbitron',monospace;font-size:0.85rem;color:var(--gold)}
+    .podium-block{border-radius:var(--radius-md) var(--radius-md) 0 0;display:flex;align-items:center;justify-content:center;padding:1rem 0.5rem;margin-top:0.75rem}
+    .podium-rank{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900}
+    .p1 .podium-block{height:110px;background:linear-gradient(to top,rgba(255,215,0,0.3),rgba(255,215,0,0.1));border:1px solid rgba(255,215,0,0.5);color:var(--gold)}
+    .p2 .podium-block{height:82px;background:linear-gradient(to top,rgba(192,192,192,0.2),rgba(192,192,192,0.07));border:1px solid rgba(192,192,192,0.4);color:#C0C0C0}
+    .p3 .podium-block{height:62px;background:linear-gradient(to top,rgba(205,127,50,0.2),rgba(205,127,50,0.07));border:1px solid rgba(205,127,50,0.4);color:#CD7F32}
+    .p1 .podium-avatar{animation:bounce 2s ease-in-out infinite}
+    .p2 .podium-avatar{animation:bounce 2s ease-in-out infinite;animation-delay:0.3s}
+    .p3 .podium-avatar{animation:bounce 2s ease-in-out infinite;animation-delay:0.6s}
+    .lb-list{display:flex;flex-direction:column;gap:0}
+    .lb-avatar{font-size:1.8rem;min-width:42px;text-align:center}
+    .lb-info{flex:1}
+    .lb-name{font-weight:800;font-size:0.95rem}
+    .lb-meta{font-size:0.78rem;color:var(--text-muted);margin-top:2px}
+    .lb-xp{font-family:'Orbitron',monospace;font-size:0.95rem;font-weight:700;color:var(--gold);white-space:nowrap}
+    .lb-badge-count{font-size:0.8rem;color:var(--text-muted);white-space:nowrap}
+    .you-tag{background:rgba(0,168,255,0.2);color:var(--blue);border:1px solid rgba(0,168,255,0.4);padding:2px 8px;border-radius:50px;font-size:0.72rem;font-weight:700}
+    .crown{font-size:1.1rem}
+    .sort-bar{display:flex;gap:0.75rem;margin-bottom:1.5rem}
+    .sort-btn{padding:6px 16px;border-radius:50px;border:1.5px solid rgba(0,200,151,0.2);background:transparent;color:var(--text-muted);font-weight:700;font-size:0.82rem;cursor:pointer;transition:var(--ease);font-family:'Nunito',sans-serif}
+    .sort-btn.active,.sort-btn:hover{border-color:var(--green);color:var(--green);background:rgba(0,200,151,0.08)}
+    .my-rank-banner{background:linear-gradient(135deg,rgba(0,168,255,0.15),rgba(0,200,151,0.1));border:1px solid rgba(0,168,255,0.35);border-radius:var(--radius-lg);padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="particle-bg"></div>
+  <nav class="navbar"></nav>
+  <main class="page-wrap">
+    <div class="container section">
+      <h1 class="section-title" style="text-align:center;margin-bottom:0.5rem">Leaderboard 🏆</h1>
+      <p style="text-align:center;color:var(--text-muted);margin-bottom:2rem">Who's the greatest Eco Hero? Climb the ranks!</p>
+
+      <!-- Podium -->
+      <div class="podium" id="podium"></div>
+
+      <div class="lb-wrap">
+        <!-- My Rank Banner -->
+        <div class="my-rank-banner" id="my-rank-banner">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span id="my-avatar" style="font-size:2rem">🌱</span>
+            <div>
+              <div style="font-weight:800" id="my-name">You</div>
+              <div style="font-size:0.82rem;color:var(--text-muted)" id="my-level">Eco Seedling</div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--blue)" id="my-rank">#—</div>
+            <div style="font-size:0.78rem;color:var(--text-muted)">Your Rank</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--gold)" id="my-xp">0 XP</div>
+            <div style="font-size:0.78rem;color:var(--text-muted)" id="my-badges">0 badges</div>
+          </div>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="sort-bar">
+          <button class="sort-btn active" id="sort-xp" onclick="sortBy('xp',this)">⚡ By XP</button>
+          <button class="sort-btn" id="sort-badges" onclick="sortBy('badges',this)">🏅 By Badges</button>
+        </div>
+
+        <!-- List -->
+        <div class="lb-list" id="lb-list"></div>
+      </div>
+    </div>
+  </main>
+  <script src="script.js"></script>
+  <script>
+    let board = [], sortKey = 'xp';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireLogin()) return;
+      injectNavbar('leaderboard.html');
+      board = getLeaderboard();
+      renderPodium();
+      renderList();
+      renderMyRank();
+    });
+
+    function sortBy(key, el) {
+      sortKey = key;
+      document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+      el.classList.add('active');
+      board.sort((a,b) => b[key] - a[key]);
+      renderList();
+    }
+
+    function renderPodium() {
+      const sorted = [...board].sort((a,b)=>b.xp-a.xp);
+      const top3 = [sorted[1], sorted[0], sorted[2]]; // 2nd, 1st, 3rd
+      const podium = document.getElementById('podium');
+      podium.innerHTML = '';
+      const rankLabels = ['🥈','🥇','🥉'];
+      const rankNums   = ['2nd','1st','3rd'];
+      const clss = ['p2','p1','p3'];
+      top3.forEach((p, i) => {
+        if (!p) return;
+        const div = document.createElement('div');
+        div.className = `podium-spot ${clss[i]}`;
+        div.innerHTML = `
+          <span class="podium-avatar">${p.avatar}</span>
+          <div class="podium-name">${p.name}${p.isMe?'<span class="you-tag ml-1">YOU</span>':''}</div>
+          <div class="podium-xp">${p.xp.toLocaleString()} XP</div>
+          <div class="podium-block"><span class="podium-rank">${rankLabels[i]}</span></div>`;
+        podium.appendChild(div);
+      });
+    }
+
+    function renderList() {
+      const sorted = [...board].sort((a,b) => b[sortKey] - a[sortKey]);
+      const list = document.getElementById('lb-list');
+      list.innerHTML = '';
+      sorted.forEach((p, idx) => {
+        const rank = idx + 1;
+        const rankClass = rank<=3 ? `rank-${rank}` : '';
+        const medals = ['🥇','🥈','🥉'];
+        const row = document.createElement('div');
+        row.className = `lb-row ${rankClass} ${p.isMe?'mine':''}`;
+        row.style.animationDelay = (idx*0.05)+'s';
+        row.innerHTML = `
+          <div class="lb-rank">${rank<=3 ? medals[rank-1] : rank}</div>
+          <div class="lb-avatar">${p.avatar}</div>
+          <div class="lb-info">
+            <div class="lb-name">${p.name} ${p.isMe?'<span class="you-tag">YOU</span>':''}</div>
+            <div class="lb-meta">${p.level}</div>
+          </div>
+          <div class="lb-badge-count">🏅 ${p.badges}</div>
+          <div class="lb-xp">⚡ ${p.xp.toLocaleString()}</div>`;
+        list.appendChild(row);
+      });
+    }
+
+    function renderMyRank() {
+      const s = getState();
+      const sorted = [...board].sort((a,b)=>b.xp-a.xp);
+      const myIdx  = sorted.findIndex(p => p.isMe || p.name === s.name);
+      const myRank = myIdx >= 0 ? myIdx + 1 : sorted.length + 1;
+      const lvl    = getLevel(s.xp);
+      document.getElementById('my-avatar').textContent = s.avatar;
+      document.getElementById('my-name').textContent   = s.name;
+      document.getElementById('my-level').textContent  = `${lvl.emoji} ${lvl.name}`;
+      document.getElementById('my-rank').textContent   = `#${myRank}`;
+      document.getElementById('my-xp').textContent     = `${s.xp.toLocaleString()} XP`;
+      document.getElementById('my-badges').textContent = `${s.badges.length} badge${s.badges.length!==1?'s':''}`;
+    }
+  </script>
+</body>
+</html>
